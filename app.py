@@ -83,7 +83,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Renfe Monitor</title>
+<title>Renfe Pollete</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne+Mono&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
@@ -164,7 +164,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <div class="container">
   <header>
     <div class="logo">// Sistema de monitorizacion</div>
-    <h1>Renfe<span>.</span>Monitor</h1>
+    <h1>Pollete<span>.</span>Renfe</h1>
   </header>
 
   <div class="error-msg" id="error-msg"></div>
