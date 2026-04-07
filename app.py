@@ -105,9 +105,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     font-family: 'Syne', sans-serif;
     min-height: 100vh;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    padding: 2rem;
+    padding: 1.5rem 1rem;
   }
   body::before {
     content: '';
@@ -120,7 +120,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .container { width: 100%; max-width: 520px; }
   header { margin-bottom: 2.5rem; }
   .logo { font-size: 0.7rem; letter-spacing: 0.3em; color: var(--amber); font-family: 'Syne Mono', monospace; margin-bottom: 0.5rem; }
-  h1 { font-size: 2.4rem; font-weight: 800; line-height: 1; color: var(--text); }
+  h1 { font-size: clamp(1.6rem, 8vw, 2.4rem); font-weight: 800; line-height: 1; color: var(--text); word-break: break-word; }
   h1 span { color: var(--amber); }
   .card { background: var(--surface); border: 1px solid var(--border); padding: 2rem; margin-bottom: 1rem; }
   .field { margin-bottom: 1.4rem; }
