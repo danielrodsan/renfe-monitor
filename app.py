@@ -322,8 +322,11 @@ def start():
             "suggestions": [s.title() for s in (suggestions or [])][:5]
         })
 
-    date_result = validate_date(date_input)
-    if not date_result:
+    from datetime import datetime
+    try:
+        parsed_date = datetime.strptime(date_input, "%d/%m/%Y")
+        date_result = type('obj', (object,), {'date': parsed_date})()
+    except ValueError:
         return jsonify({"ok": False, "error": "Fecha no valida. Usa DD/MM/YYYY."})
 
     try:
