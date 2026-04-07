@@ -42,7 +42,7 @@ def resolve_station(name):
 
 def monitor_loop(origin, dest, date, from_min, to_min):
     global monitor_state
-    interval = 15
+    interval = 20
     while not stop_event.is_set():
         try:
             scraper = Scraper(origin, dest, date)
