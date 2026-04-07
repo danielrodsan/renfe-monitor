@@ -77,3 +77,5 @@ tzlocal==5.2
     # via dateparser
 urllib3==2.2.3
     # via requests
+flask
+gunicorn
