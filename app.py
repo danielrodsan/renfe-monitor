@@ -2,6 +2,7 @@ import sys
 import os
 import threading
 import time
+from datetime import datetime
 from flask import Flask, request, jsonify, Response
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -10,7 +11,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src
 from scraper import Scraper
 from storage import StationsStorage
 from errors import StationNotFound
-from validators import validate_date
 
 app = Flask(__name__)
 
@@ -45,7 +45,7 @@ def monitor_loop(origin, dest, date, from_min, to_min):
     interval = 15
     while not stop_event.is_set():
         try:
-            scraper = Scraper(origin, dest, date.date)
+            scraper = Scraper(origin, dest, date)
             trains = scraper.get_trainrides()
             found = [
                 t.departure_time.strftime("%H:%M")
@@ -69,7 +69,16 @@ def monitor_loop(origin, dest, date, from_min, to_min):
     monitor_state["running"] = False
 
 
-HTML = """<!DOCTYPE html>
+def generate_hour_options(selected):
+    hours = ""
+    for h in range(24):
+        val = "{:02d}:00".format(h)
+        sel = " selected" if val == selected else ""
+        hours += "<option value=\"{}\"{}>{}</option>\n".format(val, sel, val)
+    return hours
+
+
+HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -117,8 +126,13 @@ HTML = """<!DOCTYPE html>
   .field { margin-bottom: 1.4rem; }
   .field:last-child { margin-bottom: 0; }
   label { display: block; font-size: 0.65rem; letter-spacing: 0.2em; color: var(--muted); margin-bottom: 0.5rem; text-transform: uppercase; }
-  input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: 'Syne Mono', monospace; font-size: 1rem; padding: 0.75rem 1rem; outline: none; transition: border-color 0.2s; }
-  input:focus { border-color: var(--amber); }
+  input, select {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    font-family: 'Syne Mono', monospace; font-size: 1rem; padding: 0.75rem 1rem;
+    outline: none; transition: border-color 0.2s; appearance: none; -webkit-appearance: none;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+  input:focus, select:focus { border-color: var(--amber); }
   input::placeholder { color: var(--muted); }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   button { width: 100%; padding: 1rem; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; border: none; transition: all 0.2s; }
@@ -151,7 +165,6 @@ HTML = """<!DOCTYPE html>
   <header>
     <div class="logo">// Sistema de monitorizacion</div>
     <h1>Renfe<span>.</span>Monitor</h1>
-    <p style="color: var(--muted); font-size: 0.7rem; font-family: 'Syne Mono', monospace; margin-top: 0.5rem;">v2</p>
   </header>
 
   <div class="error-msg" id="error-msg"></div>
@@ -181,16 +194,20 @@ HTML = """<!DOCTYPE html>
     </div>
     <div class="field">
       <label>Fecha</label>
-      <input type="text" id="date" placeholder="DD/MM/YYYY" />
+      <input type="date" id="date" />
     </div>
     <div class="field row">
       <div>
         <label>Hora minima</label>
-        <input type="text" id="from_hour" placeholder="06:00" />
+        <select id="from_hour">
+          FROM_HOUR_OPTIONS
+        </select>
       </div>
       <div>
         <label>Hora maxima</label>
-        <input type="text" id="to_hour" placeholder="22:00" />
+        <select id="to_hour">
+          TO_HOUR_OPTIONS
+        </select>
       </div>
     </div>
   </div>
@@ -286,9 +303,15 @@ document.getElementById('btn-stop').addEventListener('click', function() {
 </html>"""
 
 
+def build_html():
+    return HTML_TEMPLATE \
+        .replace("FROM_HOUR_OPTIONS", generate_hour_options("06:00")) \
+        .replace("TO_HOUR_OPTIONS", generate_hour_options("22:00"))
+
+
 @app.route("/")
 def index():
-    return Response(HTML, mimetype='text/html')
+    return Response(build_html(), mimetype='text/html')
 
 
 @app.route("/start", methods=["POST"])
@@ -323,18 +346,16 @@ def start():
             "suggestions": [s.title() for s in (suggestions or [])][:5]
         })
 
-    from datetime import datetime
     try:
-        parsed_date = datetime.strptime(date_input, "%d/%m/%Y")
-        date_result = type('obj', (object,), {'date': parsed_date})()
+        parsed_date = datetime.strptime(date_input, "%Y-%m-%d")
     except ValueError:
-        return jsonify({"ok": False, "error": "Fecha no valida. Usa DD/MM/YYYY."})
+        return jsonify({"ok": False, "error": "Fecha no valida."})
 
     try:
         from_min = parse_time(from_hour)
         to_min   = parse_time(to_hour)
     except Exception:
-        return jsonify({"ok": False, "error": "Formato de hora invalido. Usa HH:MM."})
+        return jsonify({"ok": False, "error": "Formato de hora invalido."})
 
     stop_event.clear()
     monitor_state.update({
@@ -347,7 +368,7 @@ def start():
 
     monitor_thread = threading.Thread(
         target=monitor_loop,
-        args=(origin_result, dest_result, date_result, from_min, to_min),
+        args=(origin_result, dest_result, parsed_date, from_min, to_min),
         daemon=True
     )
     monitor_thread.start()
@@ -366,5 +387,5 @@ def status():
 
 
 if __name__ == "__main__":
-    print("Abre tu navegador en http://127.0.0.1:5000")
+    print("Abre tu navegador en http://127.0.0.1:8080")
     app.run(debug=False, host='127.0.0.1', port=8080)
