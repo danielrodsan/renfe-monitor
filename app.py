@@ -151,6 +151,7 @@ HTML = """<!DOCTYPE html>
   <header>
     <div class="logo">// Sistema de monitorizacion</div>
     <h1>Renfe<span>.</span>Monitor</h1>
+    <p style="color: var(--muted); font-size: 0.7rem; font-family: 'Syne Mono', monospace; margin-top: 0.5rem;">v2</p>
   </header>
 
   <div class="error-msg" id="error-msg"></div>
